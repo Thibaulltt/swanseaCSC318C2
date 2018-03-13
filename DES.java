@@ -12,10 +12,10 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class AES {
+public class DES {
 	static Cipher cipher;
 	
-	public AES() throws Exception {
+	public DES() throws Exception {
 		cipher = Cipher.getInstance("DES");
 		
 	}
