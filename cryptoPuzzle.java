@@ -41,11 +41,22 @@ public class cryptoPuzzle {
 	private String cipheredPuzzle;	// Encrypted ciphertext emanated from DES(puzzleCompleted,secretPuzzleKey)
 
 
-	//
-	// Constructor, along with a seed value for the generator
-	// Note : seed value starts at round 0 with value Integer.MIN_VALUE
-	//        and is then the integer value of the last generated puzzle
-	//
+	/** Basic (and only) constructor of a cryptoPuzzle. 
+	 * <p>Note : seed value starts at round 0 with value Integer.MIN_VAL, and is then the integer value of the last generated puzzle.</p>
+	 * Here's a list of steps the constructor does :
+	 * <ul>
+	 * <li>- Initialises the {@code puzzleContent} variable with 128 bits of 0 (uses {@code java.util.Arrays.fill()})</li>
+	 * <li>- Create 2 PRNG to generate a random puzzle ID and a random puzzle key (uses {@code java.util.Random})</li>
+	 * <li>- We then create a random puzzle ID and a random puzzle key :</li>
+	 * 	<ul>
+	 * 	<li>- We take the next number issued by the PRNG</li>
+	 *	<li>- We use bitshifting to ensure the value of this integer is always confined to the [0; 65536[ interval. Since Integers in Java are 32-bit long, we can just shift them to the left by 16 bits, and shift them back to the right by 16 bits. As such, the upper half of the 32 bits representing the Integer are padded with 0, and thus the integer is just like a {@code short} number.</li>
+	 * 	</ul>
+	 * <li>- We use {@code CryptoLib.createKey()} to generate the {@code secretPuzzleKey} variable for the puzzle, used later for encryption.</li>
+	 * </ul>
+	 * @author Thibault de Villèle
+	 * @param seedValue the seed value passed on to the constructor to seed the PRNG for the puzzle ID. For the first iteration in {@code generatePuzzles()}, we use {@code Integer.MIN_VALUE} as a seed.
+	*/
 	public cryptoPuzzle(int seedValue) {
 		//
 		// Initialize the byte array of the puzzle contents
@@ -144,6 +155,9 @@ public class cryptoPuzzle {
 			// 
 			DES cipherEngine = new DES();
 			this.cipheredPuzzle = cipherEngine.encrypt(this.puzzleCompleted, secretPuzzleKey);
+			if (this.cipheredPuzzle.getBytes().length != 32) {
+				System.out.println("Length "+this.cipheredPuzzle.getBytes().length+", not adequate for puzzle with number "+CryptoLib.byteArrayToSmallInt(this.puzzleNumber)+", this : "+Integer.toBinaryString(puzzleNumber[0] & 0xFF).replace(' ', '0')+" "+Integer.toBinaryString(puzzleNumber[1] & 0xFF).replace(' ', '0'));
+			}
 		} catch (Exception e) {
 			System.out.println("Well you have one ERROR : "+e.getMessage());
 		}
@@ -207,6 +221,12 @@ public class cryptoPuzzle {
 		return puzzleTable;
 	}
 
+	/** Writes a cryptoPuzzle array to a file.
+	 * We first create a {@code FileOutputStream} from a {@code File} object
+	 * @param puzzleTable the array of puzzles to write to the file
+	 * @param fileNameRequested the name and or path of the file you want to write to
+	 * @return The function is returning nothing, but stops if an exception is caught whilst opening the file
+	*/
 	public static void writeToFile(cryptoPuzzle[] puzzleTable, String fileNameRequested) {
 		//
 		// We have to create a FileOutputStream to write the contents of the puzzle array to the file
@@ -226,13 +246,11 @@ public class cryptoPuzzle {
 		//
 		// And now we just iterate over the array, writing every ciphertext to the file
 		//
-		int fileCursorPosition = 0;
 		for (int i = 0; i < puzzleTable.length; i++) {
 			try {
 				String cipherText = puzzleTable[i].getCipher();
 				byte[] cipherTextBytes = cipherText.getBytes();
 				fileStream.write(cipherTextBytes);
-				fileCursorPosition += cipherTextBytes.length;
 			} catch (IOException e) {
 				System.out.println("IOException on fileStream.write(byte[],int,int) "+e.getMessage());
 			} catch (Exception e) {
