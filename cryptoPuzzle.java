@@ -257,12 +257,12 @@ public class cryptoPuzzle {
 	// returns the shared key corresponding to that puzzle
 	public static byte[] sharedKeyLookup(byte[] puzzleNumber, cryptoPuzzle[] puzzleTable) {
 		byte[] sharedKey = new byte[8];
-		String puzzleNumberHex = CryptoLib.getHexStringRepresentation(puzzleNumber);
-		int i = 0;
-
-		while (!(puzzleNumberHex.equalsIgnoreCase(CryptoLib.getHexStringRepresentation(puzzleTable[i].puzzleNumber)))) {
-			sharedKey = puzzleTable[i].puzzleSharedKey;
-			i++;
+		for (int i = 0; i < puzzleTable.length; i++) {
+			if (CryptoLib.getHexStringRepresentation(puzzleTable[i].puzzleNumber)
+					.equalsIgnoreCase(CryptoLib.getHexStringRepresentation(puzzleNumber))) {
+				sharedKey = puzzleTable[i].puzzleSharedKey;
+				break;
+			}
 		}
 		return sharedKey;
 	}
