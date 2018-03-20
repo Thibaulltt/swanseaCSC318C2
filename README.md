@@ -14,3 +14,5 @@ Just run `make` and everything will automatically be done. 4096 puzzles will be 
 ## Known bugs
 
 Apparently, Oracle decided it was a good idea to deprecate a module, and not replace it. So for now, on JDK 9.0, the class `DatatypeConverter` does not exist anymore. It works on Wiktor's machine, but under my JDK on my personal laptop, it doesn't run all the way through.
+
+You can check out the repo at : https://github.com/Thibaulltt/swanseaCSC318C2
