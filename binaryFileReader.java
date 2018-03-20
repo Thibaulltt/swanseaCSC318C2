@@ -43,21 +43,38 @@ public class binaryFileReader {
 
 	}
 
+	/**
+	 * Message cracker : tries all 2^16 combinations of keys possible.
+	 * It uses a version of the decrypt function provided in the DES.java file
+	 * that has been rewritten at the end of this file.
+	 */
 	public static byte[] messageCracker(byte[] message) {
 
+		//
+		// We initialise a test suite to brute force the puzzle Alice sent us.
+		//
 		byte[] decryptedMessage = new byte[26];
 		int possibleCombinations = (int) Math.pow(2, 16);
 		byte[][] allKeys = new byte[possibleCombinations][];
 
+		//
+		// We create an array containing all possible byte keys
+		//
 		for (int i = 0; i < possibleCombinations; i++) {
 			allKeys[i] = Arrays.copyOf(CryptoLib.smallIntToByteArray(i), 8);
 		}
 
+		//
+		// We attempt to decrypt the message, using the provided keys
+		//
 		for (int i = 0; i < allKeys.length; i++) {
 			try {
 
 				byte[] tempDecryptedMessage = decrypt(message, allKeys[i]);
 
+				//
+				// If it starts with 16 hex zeros, we're all good !
+				//
 				if (CryptoLib.getHexStringRepresentation(tempDecryptedMessage)
 						.startsWith("00000000000000000000000000000000")) {
 					decryptedMessage = Arrays.copyOf(tempDecryptedMessage, 26);
@@ -65,11 +82,9 @@ public class binaryFileReader {
 				}
 
 			} catch (Exception e) {
-
-				// TODO we might want to put some code
-				// here to handle the BadPadding exceptions
-				// or leave it empty to just ignore them (they are thrown when
-				// we try out incorrect key to decrypt the message
+				//
+				// We have a problem ! The key was ill-formatted/not the good one.
+				// 
 			}
 
 		}
@@ -78,16 +93,27 @@ public class binaryFileReader {
 
 	}
 
+	/**
+	 * Getter for the pozzle's shared key
+	 */
 	public static byte[] getSharedKey(byte[] decryptedMessage) {
 		return Arrays.copyOfRange(decryptedMessage, 18, 26);
 
 	}
 
+	/**
+	 * Getter for the puzzle number
+	 */
 	public static byte[] getPuzzleNumber(byte[] decryptedMessage) {
 		return Arrays.copyOfRange(decryptedMessage, 16, 18);
 
 	}
 
+	/**
+	 * Reader of binary files.
+	 * 
+	 * Uses a 2d byte array to store the puzzles once they're read
+	 */
 	public static byte[][] readBinaryFile(String filePath) {
 		File file = new File(filePath);
 		long fileSize = file.length();
@@ -96,9 +122,15 @@ public class binaryFileReader {
 		FileInputStream fileInputStream;
 
 		try {
+			//
+			// Create a 2D array of BUFFER_SIZE-long objects, with 'n' objects
+			//
 			fileInputStream = new FileInputStream(file);
 			data = new byte[(int) (fileSize / BUFFER_SIZE)][BUFFER_SIZE];
 
+			//
+			// We read the file, and copy the buffer contents into the puzzle array
+			//
 			for (int i = 0; i < (fileSize / BUFFER_SIZE); i++) {
 				fileInputStream.read(buffer);
 				data[i] = Arrays.copyOf(buffer, BUFFER_SIZE);
@@ -110,16 +142,23 @@ public class binaryFileReader {
 		return data;
 	}
 
+	/**
+	 * Chooses a message at random amongst the possible messages of the binary file
+	 */
 	public static byte[] randomMessagePicker(String filePath) {
 		long fileSize = new File(filePath).length();
 		Random random = new Random();
+		// Get a random number, and read the associated puzzle
 		int randomNumber = random.nextInt((int) (fileSize / BUFFER_SIZE));
 		byte[] message = readBinaryFile(filePath)[randomNumber];
 		return message;
 	}
 
+	/**
+	 * This is a slightly modified version of the decrypt function from DES.java.
+	 * This one does not use any strings.
+	 */
 	public static byte[] decrypt(byte[] encryptedMessage, byte[] keyData) throws Exception {
-
 		Cipher cipher = Cipher.getInstance("DES");
 		SecretKey secretKey = CryptoLib.createKey(keyData);
 		cipher.init(Cipher.DECRYPT_MODE, secretKey);
