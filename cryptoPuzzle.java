@@ -257,6 +257,11 @@ public class cryptoPuzzle {
 				System.out.println("The puzzle in position "+i+" has not been ciphered yet. Iterating over it. "+e.getMessage()+" "+e.getClass());
 			}
 		}
+		try {
+			fileStream.close();
+		} catch (IOException e) {
+			System.out.println("Error while closing the binary file. Message : "+e.getMessage());
+		}
 	}
 
 	public String getCipher() throws Exception {
@@ -265,6 +270,10 @@ public class cryptoPuzzle {
 		} else {
 			return cipheredPuzzle;
 		}
+	}
+
+	public Boolean IDCheck(int IDToCheck) {
+		return ( IDToCheck == CryptoLib.byteArrayToSmallInt(this.puzzleNumber) );
 	}
 
 	public byte[] getNumber() {
