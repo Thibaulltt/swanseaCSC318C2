@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.lang.Exception;
 
+
 // Needed for all the writing to a file stuff
 import java.io.FileOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.NullPointerException;
 import java.io.IOException;
+
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -110,6 +112,7 @@ public class cryptoPuzzle {
 		// that the puzzle key is 16 bits long and padded of 48 '0' to the right
 		// (Since Integers in Java are 32bits, we can shift them by 16 to get a
 		// 16bit value, and shift them back to move the '0' padding the other way)
+
 		//
 		puzzleNumber = CryptoLib.smallIntToByteArray(numberGenerator.nextInt() << 16 >>> 16);
 		puzzleEncryptionKey = new byte[8];
@@ -276,7 +279,6 @@ public class cryptoPuzzle {
 				}
 				puzzleIDs.add(newID);
 			}
-
 			//
 			// Use the ID of the newly created puzzle as a seed
 			// for the random generators of the next puzzle
@@ -290,6 +292,7 @@ public class cryptoPuzzle {
 		return puzzleTable;
 	}
 
+
 	// Method which given a puzzle number and array of not encrypted puzzles,
 	// returns the shared key corresponding to that puzzle
 	public static byte[] sharedKeyLookup(byte[] puzzleNumber, cryptoPuzzle[] puzzleTable) {
@@ -300,7 +303,6 @@ public class cryptoPuzzle {
 				sharedKey = puzzleTable[i].puzzleSharedKey;
 				break;
 			}
-
 		}
 		return sharedKey;
 	}
