@@ -8,18 +8,26 @@ import java.security.spec.InvalidKeySpecException;
 public class coursework2 {
 	public static void main(String[] args) throws IOException {
 
-		// Puzzle generation
+		//
+		// We generate the number of puzzles demanded by Alice
+		//
 		int numberOfPuzzlesToGenerate = 4096;
 		cryptoPuzzle[] puzzlesGeneratedByAlice = new cryptoPuzzle[numberOfPuzzlesToGenerate];
 		puzzlesGeneratedByAlice = cryptoPuzzle.generatePuzzles(numberOfPuzzlesToGenerate);
 		
-		//Writing puzzles to file puzzles.bin
+		//
+		// We then write the puzzles to the file 'puzzles.bin'
+		//
 		cryptoPuzzle.writePuzzlesToBinary(puzzlesGeneratedByAlice, "puzzles.bin");
 		
-		// Reading puzzles from file puzzles.bin
+		// 
+		// We now read the puzzles from puzzles.bin
+		//
 		byte[][] data = binaryFileReader.readBinaryFile("puzzles.bin");
 		
+		//
 		// Bob randomly chooses a puzzle to crack
+		//
 		byte[] BobsRandomMessage = binaryFileReader.randomMessagePicker("puzzles.bin");
 		System.out.println("The message randomly chosen by Bob is: ");
 		System.out.print(CryptoLib.getHexStringRepresentation(BobsRandomMessage));
@@ -62,7 +70,6 @@ public class coursework2 {
 			System.out.println("The message decrypted by Bob is: ");
 			System.out.print(decryptedTextMessage);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

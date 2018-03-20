@@ -29,6 +29,13 @@ import javax.crypto.KeyGenerator;
 // We need it for encryption of the puzzle
 import javax.crypto.SecretKey;
 
+/**
+ * Class for Alice's part of the job.
+ * 
+ * This class allows Alice to generate her puzzles, 
+ * write them to a binary file and look up the shared 
+ * key afterwards.
+ */
 public class cryptoPuzzle {
 
 	//
@@ -65,6 +72,7 @@ public class cryptoPuzzle {
 	 * Integer are padded with 0, and thus the integer is just like a {@code short}
 	 * number.</li>
 	 * </ul>
+	 * <li>- We now generate a shared key that will be used for message encryption once Bob found it.
 	 * <li>- We use {@code CryptoLib.createKey()} to generate the
 	 * {@code secretPuzzleKey} variable for the puzzle, used later for
 	 * encryption.</li>
@@ -85,12 +93,6 @@ public class cryptoPuzzle {
 		puzzleContent = new byte[16];
 		Arrays.fill(puzzleContent, (byte) 0x0); // Cast '0' to byte type
 
-		try {
-			puzzleSharedKey = generateRandomKey();
-		} catch (NoSuchAlgorithmException e1) {
-
-			e1.printStackTrace();
-		}
 		//
 		// Create random number generators for puzzle IDs and keys
 		//
@@ -119,19 +121,51 @@ public class cryptoPuzzle {
 		//
 
 		//
+		// We now generate a random key that will be used for encrypting Alice's 
+		// and Bob's messages later on
+		//
+		puzzleSharedKey = new byte[8];
+		try {
+			puzzleSharedKey = cryptoPuzzle.generateRandomKey();
+		} catch (NoSuchAlgorithmException e1) {
+			e1.printStackTrace();
+		}
+
+		//
 		// Now, we have to generate the SecretKey object for encryption later on
+		// (and a buncha catch blocks for the differents exceptions thrown)
 		//
 		try {
 			secretPuzzleKey = CryptoLib.createKey(puzzleEncryptionKey);
 		} catch (InvalidKeyException e) {
-			System.out.print("Caught exception : " + e.getMessage());
+			System.out.print("Caught InvalidKeyException in puzzle creation : " + e.getMessage());
 		} catch (InvalidKeySpecException e) {
-			System.out.print("Caught exception : " + e.getMessage());
+			System.out.print("Caught InvalidKeySpecException in puzzle creation : " + e.getMessage());
 		} catch (NoSuchAlgorithmException e) {
-			System.out.print("Caught exception : " + e.getMessage());
+			System.out.print("Caught NoSuchAlgorithmException in puzzle creation : " + e.getMessage());
 		}
 	}
 
+	/**
+	 * Generates a random key in the form of a byte array
+	 * @author Wiktor Nagorski
+	 */
+	public static byte[] generateRandomKey() throws NoSuchAlgorithmException {
+		KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
+		keyGenerator.init(56);
+		SecretKey secretKey = keyGenerator.generateKey();
+		String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+		byte[] encodedKeyByte = Base64.getDecoder().decode(encodedKey);
+		return encodedKeyByte;
+	}
+
+	/** Regenerating new puzzles IDs
+	 * 
+	 * If we need to regenerate the ID of a puzzle, we need to create a random generator, 
+	 * and recompute a new ID value. We then store this value in a temporary 
+	 * array, and then while the value generated is the same as the one we 
+	 * started with, we regenerate a new ID.
+	 */
 	public void regenerateID() {
 		//
 		// If we need to regenerate the ID,
@@ -155,17 +189,8 @@ public class cryptoPuzzle {
 	}
 
 	/**
-	 * Writes a cryptoPuzzle array to a file. We first create a
-	 * {@code FileOutputStream} from a {@code File} object
-	 * 
-	 * @param puzzleTable
-	 *            the array of puzzles to write to the file
-	 * @param fileNameRequested
-	 *            the name and or path of the file you want to write to
-	 * @return The function is returning nothing, but stops if an exception is
-	 *         caught whilst opening the file
+	 * Returns the cipher of the generated puzzle. (just a getter method, no need to document it)
 	 */
-
 	public String getCipher() throws Exception {
 		if (cipheredPuzzle == "") {
 			throw new Exception("Puzzle was not successfully ciphered");
@@ -174,18 +199,23 @@ public class cryptoPuzzle {
 		}
 	}
 
+	/**
+	 * Returns the ID of the generated puzzle. (just a getter method, no need to document it)
+	 */
 	public byte[] getNumber() {
 		return puzzleNumber;
 	}
 
+	/**
+	 * Returns the content of the generated puzzle. (just a getter method, no need to document it)
+	 */
 	public byte[] getContent() {
 		return puzzleContent;
 	}
 
-	public int getContentLength() {
-		return puzzleContent.length;
-	}
-
+	/**
+	 * Copies the value of newPuzzleNumber into the puzzleNumber variable of the puzzle
+	 */
 	public void changeNumber(byte[] newPuzzleNumber) {
 		//
 		// Copy the new number into the puzzleNumber attribute of the element called
@@ -194,7 +224,14 @@ public class cryptoPuzzle {
 		System.arraycopy(newPuzzleNumber, 0, this.puzzleNumber, 0, newPuzzleNumber.length);
 	}
 
-	// Same as generatePuzzles just without encryption
+	/**
+	 * Generates an array of puzzles, only to be returned to the caller.
+	 *
+	 * This function uses a `Set` object such as the puzzle IDs are all 
+	 * unique. If an ID is in the set, it has already been used (much 
+	 * faster than looking up iteratively every puzzle number)
+	 * @author Thibault de Villèle
+	 */	
 	public static cryptoPuzzle[] generatePuzzles(int numberOfPuzzlesToGenerate) {
 		//
 		// Create an array of puzzles
@@ -256,7 +293,6 @@ public class cryptoPuzzle {
 	// Method which given a puzzle number and array of not encrypted puzzles,
 	// returns the shared key corresponding to that puzzle
 	public static byte[] sharedKeyLookup(byte[] puzzleNumber, cryptoPuzzle[] puzzleTable) {
-
 		byte[] sharedKey = new byte[8];
 		for (int i = 0; i < puzzleTable.length; i++) {
 			if (CryptoLib.getHexStringRepresentation(puzzleTable[i].puzzleNumber)
@@ -269,26 +305,26 @@ public class cryptoPuzzle {
 		return sharedKey;
 	}
 
-	// Method which generates a random 64-bit DES key
-	public byte[] generateRandomKey() throws NoSuchAlgorithmException {
-		KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
-		keyGenerator.init(56);
-		SecretKey secretKey = keyGenerator.generateKey();
-		String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-		byte[] encodedKeyByte = Base64.getDecoder().decode(encodedKey);
-		return encodedKeyByte;
-	}
-
 	/**
 	 * Writes a cryptoPuzzle array to a file. We first create a
-	 * {@code FileOutputStream} from a {@code File} object
+	 * {@code FileOutputStream} from a {@code File} object, and 
+	 * then we write the puzzles to it following this procedure :
+	 * 
+	 * <ul>
+	 * <li>- We get the puzzle's data</li>
+	 * <li>- We dump it into a variable that contains the whole puzzle using a {@code ByteArrayOutputStream}.</li>
+	 * <li>- We use cryptoPuzzle.encrypt() to encrypt the puzzle and them, we write it to the file.</li>
+	 * </ul>
 	 * 
 	 * @param puzzleTable
 	 *            the array of puzzles to write to the file
 	 * @param fileNameRequested
 	 *            the name and or path of the file you want to write to
+	 * @throws IOException
+	 * 			If the file has a problem, it can throw an IOException.
 	 * @return The function is returning nothing, but stops if an exception is
 	 *         caught whilst opening the file
+	 * @author Wiktor Nagorski & Thibault de Villèle
 	 */
 	public static void writePuzzlesToBinary(cryptoPuzzle[] puzzleTable, String fileNameRequested) throws IOException {
 		//
@@ -300,53 +336,58 @@ public class cryptoPuzzle {
 		try {
 			requestedFile = new File(fileNameRequested);
 			fileStream = new FileOutputStream(requestedFile);
-
 		} catch (NullPointerException e) {
-			System.out
-					.println("Exception : Null pointer on file opening ( cryptoPuzzle.java @ 221 )\n" + e.getMessage());
+			System.out.println("Exception : Null pointer on file opening.\n" + e.getMessage());
 			return;
 		} catch (FileNotFoundException e) {
-			System.out.println(
-					"Exception : File not found upon file opening ( cryptoPuzzle.java @ 222 )\n" + e.getMessage());
+			System.out.println("Exception : File not found upon file opening.\n" + e.getMessage());
 			return;
 		}
 
 		for (int i = 0; i < puzzleTable.length; i++) {
+			//
+			// We get the puzzle data to use it just a bit further down
+			//
 			byte[] zeros = puzzleTable[i].puzzleContent;
 			byte[] puzzleNumber = puzzleTable[i].puzzleNumber;
 			byte[] sharedKey = puzzleTable[i].puzzleSharedKey;
 
-			byte[] cryptogram = new byte[26];
+			//
+			// We create a byte array that'll encompass the whole puzzle
+			//
+			byte[] completePuzzle = new byte[26];
 
+			//
+			// We then dump all the puzzle into the completePuzzle using a byte stream
+			//
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
 			try {
 				byteArrayOutputStream.write(zeros);				
 				byteArrayOutputStream.write(puzzleNumber);
 				byteArrayOutputStream.write(sharedKey);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
-			cryptogram = byteArrayOutputStream.toByteArray();
+			completePuzzle = byteArrayOutputStream.toByteArray();
 			byteArrayOutputStream.close();
 
 			try {
-				byte[] encryptedCryptogram = cryptoPuzzle.encrypt(cryptogram, puzzleTable[i].secretPuzzleKey);
-				fileStream.write(encryptedCryptogram);
+				byte[] encryptedPuzzle = cryptoPuzzle.encrypt(completePuzzle, puzzleTable[i].secretPuzzleKey);
+				fileStream.write(encryptedPuzzle);
 			} catch (IOException e) {
 				System.out.println("IOException on fileStream.write(byte[],int,int) " + e.getMessage());
 			} catch (Exception e) {
-				System.out.println("The puzzle in position " + i + " has not been ciphered yet. Iterating over it. "
-						+ e.getMessage() + " " + e.getClass());
+				System.out.println("The puzzle in position " + i + " has not been ciphered yet. Iterating over it. " + e.getMessage() + " " + e.getClass());
 			}
 		}
 		fileStream.close();
 	}
 
-	// Method which encrypts a puzzle, takes in a puzzle and an encryption key and
-	// returns encrypted puzzle
+	/**
+	 * Slightly different version of the DES.encrypt() function. It 
+	 * only returns the byte array, without converting it into a String first.
+	 * @author Wiktor Nagorski
+	 */
 	public static byte[] encrypt(byte[] message, SecretKey secretKey) throws Exception {
 		Cipher cipher = Cipher.getInstance("DES");
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey);

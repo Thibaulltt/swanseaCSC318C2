@@ -38,6 +38,21 @@ public class DES {
 		return encryptedText;
 	}
 
+	public String byteEncrypt(byte[] plainText, SecretKey secretKey) throws Exception {
+		
+		//Initialise the cipher to be in encrypt mode, using the given key.
+		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+		
+		//Perform the encryption
+		byte[] encryptedByte = cipher.doFinal(plainText);
+		
+		//Get a new Base64 (ASCII) encoder and use it to convert ciphertext back to a string
+		Base64.Encoder encoder = Base64.getEncoder();
+		String encryptedText = encoder.encodeToString(encryptedByte);
+		
+		return encryptedText;
+	}
+
 	public String decrypt(String encryptedText, SecretKey secretKey)
 			throws Exception {
 		//Get a new Base64 (ASCII) decoder and use it to convert ciphertext from a string into bytes
